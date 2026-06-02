@@ -153,9 +153,9 @@ else:
             resumo_dinamico.rename(columns={
                 'REDUTOR': 'Modelo', 'Total_Projetos': 'Total Analisado', 
                 'Casos_Super': 'Superdimensionados', 'Casos_Sub': 'Subdimensionados', 
-                'Media_Erro_Vazao': 'Δ Médio Erro de Vazão [L/min]', 'Eficiencia_Media_Proj': 'Eficiência Média Real'
+                'Media_Erro_Vazao': 'Δ Erro Médio de Vazão [L/min]', 'Eficiencia_Media_Proj': 'Eficiência Média Real'
             }).style.format({'Δ Médio de Vazão [L/min]': '{:+.1f}', 'Eficiência Média Real': '{:.4f}'})
-            .background_gradient(subset=['Δ Médio Erro de Vazão [L/min]'], cmap='coolwarm'),
+            .background_gradient(subset=['Δ Erro Médio de Vazão [L/min]'], cmap='coolwarm'),
             use_container_width=True
         )
 
