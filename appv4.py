@@ -321,7 +321,7 @@ else:
             
             st.subheader("Balanço Térmico e Solução Hidráulica")
             rc1, rc2, rc3, rc4 = st.columns(4)
-            rc1.metric("Potência Dissipada", f"{perda_total_kw:.2f} kW", help="Energia total perdida pelo redutor (perda_total_kw = potencia_in * (1 - eficiencia))")
+            rc1.metric("Potência Dissipada", f"{perda_total_kw:.2f} kW", f"-{((1.0000 - eficiencia)*100):.1f}% de Perda", help="Energia total perdida pelo redutor (perda_total_kw = potencia_in * (1 - eficiencia))")
             rc2.metric(f"Fator de Correção ($K$)", f"{fator_k * 100:.2f}%", f"Ref. Histórica {familia_sel}", delta_color="off", help="Com base no histórico, é a porcentagem da perda total que se converte em carga térmica no óleo.")
             rc3.metric("Carga Térmica Efetiva no Óleo", f"{carga_termica_real:.2f} kW", help="É a carga térmica após a aplicação do fator de correção, que será efetivamente usada no cálculo otimizado da vazão")
             rc4.metric("Redução de Vazão Estimada", f"{(vazao_classica - vazao_otimizada):.1f} L/min", f"-{((1 - fator_k)*100):.1f}% de Volume")
