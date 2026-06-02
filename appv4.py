@@ -171,6 +171,91 @@ else:
                 df_eff_clean['RPM'] = pd.to_numeric(df_eff_clean['RPM'], errors='coerce')
                 df_eff_clean = df_eff_clean.dropna(subset=['RPM'])
 
+                # --- NOVO: CALCULADORA DE INTERPOLAÇÃO REATIVA ---
+                st.markdown("#### Calculadora de Interpolação")
+                st.write("Estime a eficiência global cruzando valores de rotação e carga.")
+                
+                c_int1, c_int2, c_int3 = st.columns([1, 1, 2])
+                with c_int1:
+                    rpm_input = st.number_input("Rotação (RPM)", min_value=0.0, max_value=30000.0, value=6000.0, step=50.0)
+                with c_int2:
+                    carga_input = st.number_input("Carga Nominal (%)", min_value=0.0, max_value=150.0, value=100.0, step=5.0)
+                
+                # Lógica da Interpolação Matemática
+                df_eff_sorted = df_eff_clean.sort_values(by='RPM') # Obriga a ordenar os RPMs para o NumPy não bugar
+                known_rpms = df_eff_sorted['RPM'].values
+                known_loads = np.array([25, 50, 75, 100])
+                eff_matrix = df_eff_sorted[['25% Carga', '50% Carga', '75% Carga', '100% Carga']].values
+                
+                # Passo 1: Interpolação no eixo da Carga (para cada RPM da tabela)
+                effs_at_input_load = [np.interp(carga_input, known_loads, eff_matrix[i, :]) for i in range(len(known_rpms))]
+                # Passo 2: Interpolação no eixo do RPM (usando as eficiências descobertas no passo 1)
+                final_eff = np.interp(rpm_input, known_rpms, effs_at_input_load)
+                
+                with c_int3:
+                    st.success(f"**Eficiência Interpolada:** `{final_eff:.4f}`")
+                    
+                    # Alertas de extrapolação (quando o usuário digita algo maior ou menor que o catálogo tem)
+                    extrapolado = []
+                    if rpm_input < known_rpms.min() or rpm_input > known_rpms.max(): extrapolado.append("RPM")
+                    if carga_input < known_loads.min() or carga_input > known_loads.max(): extrapolado.append("Carga")
+                    
+                    if extrapolado:
+                        st.caption(f"⚠️ Atenção: **{' e '.join(extrapolado)}** extrapolou os limites do catálogo. O valor da borda foi fixado por segurança.")
+
+                df_eff_melted = df_eff_clean.melt(id_vars=['RPM'], var_name='Carga Nominal', value_name='Eficiência')
+                df_eff_melted['RPM_str'] = df_eff_melted['RPM'].astype(int).astype(str) + " RPM"
+
+                col_e1, col_e2 = st.columns([2, 1])
+                with col_e1:
+                    fig_eff = px.line(df_eff_melted, x='Carga Nominal', y='Eficiência', color='RPM_str', markers=True, title="Curvas de Eficiência em Função da Carga")
+                    fig_eff.update_traces(line=dict(width=2.5), marker=dict(size=8), hovertemplate='%{y:.4f}<extra></extra>')
+                    fig_eff.update_layout(plot_bgcolor='#FAFAFA', paper_bgcolor='#FAFAFA', yaxis=dict(range=[0.935, 0.995], tickformat=".4f", gridcolor='#EAEAEA', zeroline=False), xaxis=dict(gridcolor='#EAEAEA', zeroline=False), hovermode="x unified")
+                    st.plotly_chart(fig_eff, use_container_width=True)
+                with col_e2:
+                    st.dataframe(df_eff_clean.style.format({'RPM': '{:.0f}', '25% Carga': '{:.4f}', '50% Carga': '{:.4f}', '75% Carga': '{:.4f}', '100% Carga': '{:.4f}'}), use_container_width=True)
+            except Exception as e:
+                st.error(f"Não foi possível renderizar o gráfico de eficiência: {e}")
+        else:
+            st.info("Aba de Eficiência não encontrada.")
+
+    # ==========================================
+    # ABA 4: CURVAS DE POTÊNCIA
+    # ==========================================
+    with tab4:
+        st.header("Capacidade de Potência Máxima por Redutor")
+        if not df_pot.empty:
+            try:
+                df_pot_clean = df_pot.copy()
+                df_pot_clean = df_pot_clean.rename(columns={df_pot_clean.columns[0]: 'Redutor'})
+                colunas_rpm = [col for col in df_pot_clean.columns if any(char.isdigit() for char in str(col))]
+                
+                df_melt = df_pot_clean.melt(id_vars=['Redutor'], value_vars=colunas_rpm, var_name='RPM_str', value_name='Potencia_kW')
+                df_melt['RPM'] = df_melt['RPM_str'].astype(str).str.extract(r'(\d+)').astype(float)
+                df_melt['Potencia_kW'] = pd.to_numeric(df_melt['Potencia_kW'].astype(str).str.replace(',', '.'), errors='coerce')
+                
+                df_plot = df_melt.dropna(subset=['RPM', 'Potencia_kW']).copy()
+                df_plot = df_plot[df_plot['Redutor'].notna()]
+                df_plot['Redutor'] = df_plot['Redutor'].astype(str)
+                df_plot = df_plot.sort_values(by=['Redutor', 'RPM'])
+
+                col_p1, col_p2 = st.columns([2, 1])
+                with col_p1:
+                    fig_pot = go.Figure()
+                    for redutor in df_plot['Redutor'].unique():
+                        df_sub = df_plot[df_plot['Redutor'] == redutor]
+                        fig_pot.add_trace(go.Scatter(x=df_sub['RPM'], y=df_sub['Potencia_kW'], mode='lines+markers', name=redutor, line=dict(width=2.5), hovertemplate='%{y:,.0f} kW<extra></extra>'))
+                    
+                    fig_pot.update_layout(title="Curva Limite de Potência vs. RPM", plot_bgcolor='#FAFAFA', paper_bgcolor='#FAFAFA', xaxis_title="Rotação (RPM)", yaxis_title="Potência Máxima [kW]", yaxis=dict(range=[0, 70000], gridcolor='#EAEAEA', zeroline=False, tickformat=","), xaxis=dict(gridcolor='#EAEAEA', zeroline=False, tickmode='array', tickvals=[4000, 4800, 6000, 6800, 7550, 8500, 10880, 12000, 13600]), hovermode="x unified", margin=dict(l=40, r=40, t=60, b=40))
+                    st.plotly_chart(fig_pot, use_container_width=True)
+                with col_p2:
+                    st.dataframe(df_pot_clean, use_container_width=True)
+            except Exception as e:
+                st.error(f"Não foi possível processar a aba de Potência: {e}")
+        else:
+            st.info("Aba de Potência não encontrada.")
+
+                
                 df_eff_melted = df_eff_clean.melt(id_vars=['RPM'], var_name='Carga Nominal', value_name='Eficiência')
                 df_eff_melted['RPM_str'] = df_eff_melted['RPM'].astype(int).astype(str) + " RPM"
 
