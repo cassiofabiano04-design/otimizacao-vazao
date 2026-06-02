@@ -79,7 +79,7 @@ else:
         c1.metric("Projetos Analisados", len(df))
         super_qtd = len(df[df['Delta Vazão'] > 0])
         c2.metric("Casos Superdimensionados", f"{super_qtd} ({ (super_qtd/len(df))*100:.1f}%)")
-        c3.metric("Sobredimensionamento Médio (Vazão)", f"+{df['Delta Vazão'].mean():.1f} L/min")
+        c3.metric("Superdimensionamento Médio (Vazão)", f"+{df['Delta Vazão'].mean():.1f} L/min")
         
         st.divider()
         col_g1, col_g2 = st.columns(2)
