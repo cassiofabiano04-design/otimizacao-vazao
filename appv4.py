@@ -171,38 +171,6 @@ else:
                 df_eff_clean['RPM'] = pd.to_numeric(df_eff_clean['RPM'], errors='coerce')
                 df_eff_clean = df_eff_clean.dropna(subset=['RPM'])
 
-                # --- NOVO: CALCULADORA DE INTERPOLAÇÃO REATIVA ---
-                st.markdown("#### Calculadora de Interpolação")
-                st.write("Estime a eficiência global cruzando valores de rotação e carga.")
-                
-                c_int1, c_int2, c_int3 = st.columns([1, 1, 2])
-                with c_int1:
-                    rpm_input = st.number_input("Rotação (RPM)", min_value=0.0, max_value=30000.0, value=6000.0, step=50.0)
-                with c_int2:
-                    carga_input = st.number_input("Carga Nominal (%)", min_value=0.0, max_value=150.0, value=100.0, step=5.0)
-                
-                # Lógica da Interpolação Matemática
-                df_eff_sorted = df_eff_clean.sort_values(by='RPM') # Obriga a ordenar os RPMs para o NumPy não bugar
-                known_rpms = df_eff_sorted['RPM'].values
-                known_loads = np.array([25, 50, 75, 100])
-                eff_matrix = df_eff_sorted[['25% Carga', '50% Carga', '75% Carga', '100% Carga']].values
-                
-                # Passo 1: Interpolação no eixo da Carga (para cada RPM da tabela)
-                effs_at_input_load = [np.interp(carga_input, known_loads, eff_matrix[i, :]) for i in range(len(known_rpms))]
-                # Passo 2: Interpolação no eixo do RPM (usando as eficiências descobertas no passo 1)
-                final_eff = np.interp(rpm_input, known_rpms, effs_at_input_load)
-                
-                with c_int3:
-                    st.success(f"**Eficiência Interpolada:** `{final_eff:.4f}`")
-                    
-                    # Alertas de extrapolação (quando o usuário digita algo maior ou menor que o catálogo tem)
-                    extrapolado = []
-                    if rpm_input < known_rpms.min() or rpm_input > known_rpms.max(): extrapolado.append("RPM")
-                    if carga_input < known_loads.min() or carga_input > known_loads.max(): extrapolado.append("Carga")
-                    
-                    if extrapolado:
-                        st.caption(f"⚠️ Atenção: **{' e '.join(extrapolado)}** extrapolou os limites do catálogo. O valor da borda foi fixado por segurança.")
-
                 df_eff_melted = df_eff_clean.melt(id_vars=['RPM'], var_name='Carga Nominal', value_name='Eficiência')
                 df_eff_melted['RPM_str'] = df_eff_melted['RPM'].astype(int).astype(str) + " RPM"
 
