@@ -19,7 +19,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 st.title("Otimização da Estimativa de Vazão de óleo para Redutores")
-st.write("Análise de desvios térmicos e de vazão entre as fases de proposta (consulta) e projeto.")
+st.write("Análise de desvios de vazão entre as fases de proposta (consulta) e projeto.")
 
 # 2. Função de Leitura (Ignora espaços extras nos nomes das abas)
 @st.cache_data
