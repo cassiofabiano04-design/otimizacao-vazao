@@ -172,7 +172,7 @@ else:
                 df_eff_clean['RPM'] = pd.to_numeric(df_eff_clean['RPM'], errors='coerce')
                 df_eff_clean = df_eff_clean.dropna(subset=['RPM'])
 
-# --- NOVO: CALCULADORA DE INTERPOLAÇÃO REATIVA ---
+# ---CALCULADORA DE INTERPOLAÇÃO---
                 st.markdown("#### Calculadora de Interpolação")
                 st.write("Estime a eficiência global cruzando valores de rotação e carga.")
                 
@@ -180,7 +180,7 @@ else:
                 with c_int1:
                     rpm_input = st.number_input("Rotação (RPM)", min_value=0.0, max_value=30000.0, value=6000.0, step=50.0)
                 with c_int2:
-                    carga_input = st.number_input("Carga Nominal (%)", min_value=0.0, max_value=150.0, value=100.0, step=5.0)
+                    carga_input = st.number_input("Carga Nominal (%)", min_value=0.0, max_value=150.0, value=100.0, step=0.1)
                 
                 # Lógica da Interpolação Matemática
                 df_eff_sorted = df_eff_clean.sort_values(by='RPM') # Obriga a ordenar os RPMs para o NumPy não bugar
