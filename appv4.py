@@ -13,9 +13,16 @@ st.set_page_config(
 
 st.markdown("""
     <style>
+    /* ----- Seu CSS de Cores e Layout ----- */
     .main {background-color: #FAFAFA;}
     h1, h2, h3 {color: #2C3E50; font-family: 'Arial', sans-serif;}
     .stMetric {background-color: #FFFFFF; padding: 15px; border-radius: 5px; border: 1px solid #EAEAEA;}
+    
+    /* ----- NOVO: Ocultar Cabeçalho, Menu e Rodapé ----- */
+    #MainMenu {visibility: hidden;}
+    [data-testid="stToolbar"] {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
